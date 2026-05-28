@@ -1,0 +1,6 @@
+<?php
+require_once '../includes/auth.php';
+check_role('organizer');
+
+$page_title = 'Vote Counts';
+?>
