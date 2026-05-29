@@ -1,8 +1,0 @@
-# PHPMailer (Manual Copy-Paste)
-includes/phpmailer/
-
-# IDE / OS files
-.idea/
-.vscode/
-.DS_Store
-Thumbs.db

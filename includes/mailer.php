@@ -13,12 +13,12 @@ function send_email($to_email, $to_name, $subject, $body) {
     $mail->isSMTP();
     $mail->Host       = 'smtp.gmail.com';
     $mail->SMTPAuth   = true;
-    $mail->Username   = 'youremail@gmail.com'; // TODO: Replace with actual credentials
-    $mail->Password   = 'your_app_password';  // TODO: Replace with actual credentials
+    $mail->Username   = 'bubiksbube@gmail.com'; 
+    $mail->Password   = 'jtib vwxs xqmu qfad';  
     $mail->SMTPSecure = 'ssl';
     $mail->Port       = 465;
 
-    $mail->setFrom('youremail@gmail.com', 'Election System'); // TODO: Replace with actual credentials
+    $mail->setFrom('bubiksbube@gmail.com', 'Election System'); 
     $mail->addAddress($to_email, $to_name);
 
     $mail->isHTML(true);
