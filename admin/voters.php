@@ -10,17 +10,6 @@ if (isset($_GET['search'])) {
     $search = $_GET['search'];
 }
 
-$sort_col = 'date_of_birth';
-$allowed_cols = ['voter_name', 'date_of_birth', 'gender', 'contact_information'];
-if (isset($_GET['sort']) && in_array($_GET['sort'], $allowed_cols)) {
-    $sort_col = $_GET['sort'];
-}
-
-$sort_dir = 'DESC';
-if (isset($_GET['dir']) && $_GET['dir'] === 'ASC') {
-    $sort_dir = 'ASC';
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'];
 
@@ -63,39 +52,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $search_param = "%$search%";
-$stmt = mysqli_prepare($conn, "SELECT voter_id, voter_name, date_of_birth, gender, contact_information FROM tbl_voters WHERE voter_name LIKE ? ORDER BY $sort_col $sort_dir");
+$stmt = mysqli_prepare($conn, "SELECT voter_id, voter_name, date_of_birth, gender, contact_information FROM tbl_voters WHERE voter_name LIKE ? ORDER BY date_of_birth DESC");
 mysqli_stmt_bind_param($stmt, 's', $search_param);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 $voters = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
-require_once '../includes/header.php';
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voting System - <?php echo $page_title; ?></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <?php require_once '../includes/style.php'; ?>
+</head>
+<body>
+    <div class="d-flex vw-100 vh-100 overflow-hidden">
+        <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
+        <aside class="d-flex flex-column flex-shrink-0 p-3 text-bg-dark" style="width: 280px; overflow-y: auto;">
+            <div class="d-flex align-items-center mb-3 text-white text-decoration-none border-bottom border-secondary pb-3 w-100"><span class="fs-4 fw-bold w-100 text-center">Voting System</span></div>
+            <div class="py-3 border-bottom border-secondary w-100 text-center">
+                <span class="d-block fw-bold fs-5 mb-1"><?php echo $_SESSION['full_name']; ?></span>
+                <span class="badge bg-secondary px-3 py-2"><?php echo strtoupper($_SESSION['role']); ?></span>
+            </div>
+            <ul class="nav nav-pills flex-column mb-auto mt-3 w-100 gap-1">
+                <li class="nav-item"><a href="dashboard.php" class="nav-link text-white <?php echo ($current_page === 'dashboard.php') ? 'active' : ''; ?> px-3 py-2">Dashboard</a></li>
+                <li class="nav-item"><a href="users.php" class="nav-link text-white <?php echo ($current_page === 'users.php') ? 'active' : ''; ?> px-3 py-2">Users</a></li>
+                <li class="nav-item"><a href="logs.php" class="nav-link text-white <?php echo ($current_page === 'logs.php') ? 'active' : ''; ?> px-3 py-2">Logs</a></li>
+                <li class="nav-item"><a href="voters.php" class="nav-link text-white <?php echo ($current_page === 'voters.php') ? 'active' : ''; ?> px-3 py-2">Voters</a></li>
+                <li class="nav-item"><a href="candidates.php" class="nav-link text-white <?php echo ($current_page === 'candidates.php') ? 'active' : ''; ?> px-3 py-2">Candidates</a></li>
+                <li class="nav-item"><a href="positions.php" class="nav-link text-white <?php echo ($current_page === 'positions.php') ? 'active' : ''; ?> px-3 py-2">Positions</a></li>
+                <li class="nav-item"><a href="elections.php" class="nav-link text-white <?php echo ($current_page === 'elections.php') ? 'active' : ''; ?> px-3 py-2">Elections</a></li>
+                <li class="nav-item"><a href="votes.php" class="nav-link text-white <?php echo ($current_page === 'votes.php') ? 'active' : ''; ?> px-3 py-2">Votes</a></li>
+                <li class="nav-item"><a href="vote_counts.php" class="nav-link text-white <?php echo ($current_page === 'vote_counts.php') ? 'active' : ''; ?> px-3 py-2">Vote Counts</a></li>
+            </ul>
+            <div class="mt-auto w-100 border-top border-secondary pt-3">
+                <a href="../logout.php" class="nav-link text-danger fw-bold px-3 py-2 text-center w-100">Logout</a>
+            </div>
+        </aside>
+        <div class="d-flex flex-column flex-grow-1 overflow-auto bg-light">
+            <header class="d-flex justify-content-between align-items-center px-4 py-3 bg-white border-bottom shadow-sm">
+                <h1 class="page-title fs-4 mb-0"><?php echo $page_title; ?></h1>
+                <div class="text-muted"><span>Welcome, <strong><?php echo $_SESSION['full_name']; ?></strong></span></div>
+            </header>
+            <main class="p-4 flex-grow-1">
 
-<div class="page-header">
+<div class="d-flex justify-content-between align-items-center mb-4">
     <h2><?php echo $page_title; ?></h2>
-    <button class="btn btn-primary" onclick="document.getElementById('addModal').classList.add('active')">Add Voter</button>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">Add Voter</button>
 </div>
 
 <?php if ($message !== '') { ?>
     <div class="alert alert-success"><?php echo $message; ?></div>
 <?php } ?>
 
-<div class="table-container">
-    <div class="table-header-tools">
-        <form method="GET" action="" class="search-bar">
-            <input type="text" name="search" class="input" placeholder="Search voters..." value="<?php echo $search; ?>">
-            <input type="hidden" name="sort" value="<?php echo $sort_col; ?>">
-            <input type="hidden" name="dir" value="<?php echo $sort_dir; ?>">
+<div class="table-responsive bg-white rounded shadow-sm border mb-4">
+    <div class="d-flex justify-content-between align-items-center p-3 border-bottom bg-white">
+        <form method="GET" action="" class="d-flex gap-2 w-100" style="max-width: 400px;">
+            <input type="text" name="search" class="form-control" placeholder="Search voters..." value="<?php echo $search; ?>">
             <button type="submit" class="btn btn-secondary btn-sm">Search</button>
         </form>
     </div>
-    <table class="data-table">
+    <table class="table table-striped table-hover align-middle">
         <thead>
             <tr>
-                <th><a href="?search=<?php echo $search; ?>&sort=voter_name&dir=<?php echo ($sort_col === 'voter_name' && $sort_dir === 'ASC') ? 'DESC' : 'ASC'; ?>">Name</a></th>
-                <th><a href="?search=<?php echo $search; ?>&sort=date_of_birth&dir=<?php echo ($sort_col === 'date_of_birth' && $sort_dir === 'ASC') ? 'DESC' : 'ASC'; ?>">Date of Birth</a></th>
-                <th><a href="?search=<?php echo $search; ?>&sort=gender&dir=<?php echo ($sort_col === 'gender' && $sort_dir === 'ASC') ? 'DESC' : 'ASC'; ?>">Gender</a></th>
+                <th>Name</th>
+                <th>Date of Birth</th>
+                <th>Gender</th>
                 <th>Contact</th>
                 <th>Actions</th>
             </tr>
@@ -122,81 +148,85 @@ require_once '../includes/header.php';
 </div>
 
 <!-- Add Modal -->
-<div class="modal-overlay" id="addModal">
-    <div class="modal-content">
+<div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
         <div class="modal-header">
-            <span class="modal-title">Add Voter</span>
-            <button class="modal-close" onclick="document.getElementById('addModal').classList.remove('active')">&times;</button>
+            <h5 class="modal-title">Add Voter</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <form method="POST" action="">
             <div class="modal-body">
                 <input type="hidden" name="action" value="add">
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label">Voter Name</label>
-                    <input type="text" name="voter_name" class="input" required>
+                    <input type="text" name="voter_name" class="form-control" required>
                 </div>
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label">Date of Birth</label>
-                    <input type="date" name="date_of_birth" class="input" required>
+                    <input type="date" name="date_of_birth" class="form-control" required>
                 </div>
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label">Gender</label>
-                    <select name="gender" class="select">
+                    <select name="gender" class="form-select">
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                         <option value="Other">Other</option>
                     </select>
                 </div>
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label">Contact Information</label>
-                    <input type="text" name="contact_information" class="input">
+                    <input type="text" name="contact_information" class="form-control">
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="document.getElementById('addModal').classList.remove('active')">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" class="btn btn-primary">Save</button>
             </div>
         </form>
+        </div>
     </div>
 </div>
 
 <!-- Edit Modal -->
-<div class="modal-overlay" id="editModal">
-    <div class="modal-content">
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
         <div class="modal-header">
-            <span class="modal-title">Edit Voter</span>
-            <button class="modal-close" onclick="document.getElementById('editModal').classList.remove('active')">&times;</button>
+            <h5 class="modal-title">Edit Voter</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <form method="POST" action="">
             <div class="modal-body">
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="voter_id" id="edit_voter_id">
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label">Voter Name</label>
-                    <input type="text" name="voter_name" id="edit_voter_name" class="input" required>
+                    <input type="text" name="voter_name" id="edit_voter_name" class="form-control" required>
                 </div>
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label">Date of Birth</label>
-                    <input type="date" name="date_of_birth" id="edit_date_of_birth" class="input" required>
+                    <input type="date" name="date_of_birth" id="edit_date_of_birth" class="form-control" required>
                 </div>
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label">Gender</label>
-                    <select name="gender" id="edit_gender" class="select">
+                    <select name="gender" id="edit_gender" class="form-select">
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                         <option value="Other">Other</option>
                     </select>
                 </div>
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label">Contact Information</label>
-                    <input type="text" name="contact_information" id="edit_contact_information" class="input">
+                    <input type="text" name="contact_information" id="edit_contact_information" class="form-control">
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="document.getElementById('editModal').classList.remove('active')">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" class="btn btn-primary">Save</button>
             </div>
         </form>
+        </div>
     </div>
 </div>
 
@@ -207,8 +237,13 @@ function openEditModal(voter) {
     document.getElementById('edit_date_of_birth').value      = voter.date_of_birth;
     document.getElementById('edit_gender').value             = voter.gender;
     document.getElementById('edit_contact_information').value = voter.contact_information;
-    document.getElementById('editModal').classList.add('active');
+    new bootstrap.Modal(document.getElementById('editModal')).show();
 }
 </script>
 
-<?php require_once '../includes/footer.php'; ?>
+            </main>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
